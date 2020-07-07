@@ -4,7 +4,6 @@
     <title>Bandit task</title>
 
     <!-- Load libraries -->
-    <script src="../static/lib/jquery-3.3.1/jquery.min.js"></script>
     <script src="../static/lib/jspsych-6.1.0/jspsych.js"></script>
 
     <!-- Load NivTurk plug-ins -->
@@ -50,10 +49,7 @@
     window.addEventListener("beforeunload", verify_unload);
 
     // Audio that needs to be preloaded
-    var audio = [
-      '../static/sound/incorrect_sound_2.mp3',
-      '../static/sound/correct_sound_3.wav'
-    ];
+    var audio = ['../static/sound/incorrect_sound_2.mp3', '../static/sound/correct_sound_3.wav'];
 
     // Initialize key presses
     var key_left = 65;  // Left circle = 'A'
@@ -239,12 +235,12 @@
             }
 
             if (trial.prompt == reward) {
-                trial.stimulus = 'sound/correct_sound_3.wav'
+                trial.stimulus = '../static/sound/correct_sound_3.wav'
                 jsPsych.data.getLastTrialData().values()[0].rewarded = true;
                 points += 10;
                 document.querySelector('#bandit-correct-count').innerHTML = points;
             } else if (trial.prompt == no_reward) {
-                trial.stimulus = 'sound/incorrect_sound_2.mp3';
+                trial.stimulus = '../static/sound/incorrect_sound_2.mp3';
             }
 
         },
