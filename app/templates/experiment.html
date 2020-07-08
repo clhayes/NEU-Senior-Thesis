@@ -83,10 +83,11 @@
     var timeline = [];
 
     // Initialize other parameters
-    var block_length = 900000; // milliseconds
+    var expt_length = 900000; // milliseconds
     var points;
     var block = 1;
     var trial = 1;
+    var random_jitter;
 
     // Initialize reward prompts (color-based)
     var reward_L = "<span style='color: #0000ff; font-size:30px;'>+10</span>";
@@ -126,7 +127,7 @@
             "<p class='small'><strong>Press 'L' to select</strong></p></div><p></p>",
 
             "<p>The duration of this experiment is <strong>" +
-                block_length/1000/60 + " minutes</strong>.</p><br><p>Click 'Next' to begin the experiment.</p>",
+                expt_length/1000/60 + " minutes</strong>.</p><br><p>Click 'Next' to begin the experiment.</p>",
             ],
         show_clickable_nav: true,
         post_trial_gap: 1000
@@ -151,7 +152,7 @@
         document.querySelector('#bandit-correct-count').innerHTML = points
         block_start_time = Date.now();
         timer_ticks = setInterval(function(){
-          var proportion_time_elapsed = Math.floor((Date.now() - block_start_time) / block_length * 100);
+          var proportion_time_elapsed = Math.floor((Date.now() - block_start_time) / expt_length * 100);
           document.querySelector('#bandit-timer').value = proportion_time_elapsed;
         }, 100)
       }
@@ -163,15 +164,17 @@
         type: 'html-keyboard-response',
         stimulus: "<div style='font-size:60px;'>+</div>",
         data: {test_phase: 'initiation'},
-        post_trial_gap: function(){
-            return jsPsych.randomization.sampleWithoutReplacement([50, 100, 150, 200, 250,
+        post_trial_gap: function(data){
+            random_jitter = jsPsych.randomization.sampleWithoutReplacement([50, 100, 150, 200, 250,
                 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], 1)[0];
+            return random_jitter;
         },
         choices: [32],        // allow space bar
 
         on_finish: function(data) {
             data.block_num = block;
             data.trial_num = trial;
+            data.post_jitter = random_jitter;
         }
 
     }
@@ -184,9 +187,10 @@
                 "<div style='float: right;'><img src='../static/img/neworange.png'></img></div>",
         data: {test_phase: 'choice'},
         trial_duration: 15000,
-        post_trial_gap: function(){
-            return jsPsych.randomization.sampleWithoutReplacement([50, 100, 150, 200, 250,
+        post_trial_gap: function(data){
+            random_jitter = jsPsych.randomization.sampleWithoutReplacement([50, 100, 150, 200, 250,
                 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], 1)[0];
+            return random_jitter;
         },
         choices: [key_left, key_right],              // left/right arrow keys
 
@@ -194,6 +198,7 @@
 
             data.block_num = block;
             data.trial_num = trial;
+            data.post_jitter = random_jitter;
 
             if (correct == key_left) {
                 data.correct_choice = 'left';
@@ -295,7 +300,7 @@
     var test_procedure = {
         timeline: [initiation, choice, outcome],
         loop_function: function(){
-            if(Date.now() - block_start_time < block_length){
+            if(Date.now() - block_start_time < expt_length){
                 return true;
             } else {
                 return false;
