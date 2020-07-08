@@ -5,6 +5,7 @@
 
     <!-- Load libraries -->
     <script src="../static/lib/jspsych-6.1.0/jspsych.js"></script>
+    <script src="../static/lib/jquery-3.3.1/jquery.min.js"></script>
 
     <!-- Load NivTurk plug-ins -->
     <script src="../static/js/jspsych-pass-data.js" type="text/javascript"></script>
@@ -49,7 +50,11 @@
     window.addEventListener("beforeunload", verify_unload);
 
     // Audio that needs to be preloaded
-    var audio = ['../static/sound/incorrect_sound_2.mp3', '../static/sound/correct_sound_3.wav'];
+    var audio = [
+      '../static/sound/incorrect_sound_2.mp3',
+      '../static/sound/correct_sound_3.wav',
+      '../static/sound/silence.mp3'
+    ];
 
     // Initialize key presses
     var key_left = 65;  // Left circle = 'A'
@@ -330,13 +335,14 @@
         timeline: timeline,
         use_webaudio: false,
         preload_audio: audio,
+        show_preload_progress_bar: false,
         on_finish: function() {
 
           // Remove requirement to verify redirect
           window.removeEventListener("beforeunload", verify_unload);
 
           // Display jsPsych data in viewport.
-          jsPsych.data.displayData();
+          // jsPsych.data.displayData();
 
           // Save complete dataset to disk.
           pass_data("{{workerId}}", "{{assignmentId}}", "{{hitId}}",  "{{a}}", "{{tp_a}}", "{{b}}", "{{tp_b}}", "{{c}}", "{{tp_c}}");
