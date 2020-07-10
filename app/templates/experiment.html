@@ -17,6 +17,8 @@
     <script src="../static/lib/jspsych-6.1.0/plugins/jspsych-html-keyboard-response.js"></script>
     <script src="../static/lib/jspsych-6.1.0/plugins/jspsych-image-keyboard-response.js"></script>
     <script src="../static/lib/jspsych-6.1.0/plugins/jspsych-audio-keyboard-response.js"></script>
+    <script src="../static/lib/jspsych-6.1.0/plugins/jspsych-survey-likert.js"></script>
+    <script src="../static/lib/jspsych-6.1.0/plugins/jspsych-survey-multi-choice.js"></script>
     <script src="../static/lib/jspsych-6.1.0/plugins/jspsych-survey-text.js"></script>
     <script src="../static/lib/jspsych-6.1.0/plugins/jspsych-call-function.js"></script>
 
@@ -33,8 +35,7 @@
   </head>
   <body>
     <div id="bandit-score">
-      <span class="bandit-top">Points earned: <span id="bandit-correct-count">0</span></span>
-      <span class="bandit-top">Time: <progress max="100" value="0" id="bandit-timer"></progress></span>
+      <span class="bandit-top">Progress: <progress max="100" value="0" id="bandit-timer"></progress></span>
     </div>
     <div id="jspsych-target"></div>
   </body>
@@ -90,13 +91,13 @@
     var random_jitter;
 
     // Initialize reward prompts (color-based)
-    var reward_L = "<span style='color: #0000ff; font-size:30px;'>+10</span>";
-    var no_reward_L = "<span style='color: #0000ff; font-size:30px;'>+0</span>";
-    var reward_R = "<span style='color: #ff8c00; font-size:30px;'>+10</span>";
-    var no_reward_R = "<span style='color: #ff8c00; font-size:30px;'>+0</span>";
+    var reward_L = "<span style='color: #0000ff; font-size:45px;'>+10</span>";
+    var no_reward_L = "<span style='color: #0000ff; font-size:45px;'>+0</span>";
+    var reward_R = "<span style='color: #ff8c00; font-size:45px;'>+10</span>";
+    var no_reward_R = "<span style='color: #ff8c00; font-size:45px;'>+0</span>";
 
-    var reward = "<span style='font-size:30px;'>+10</span>";
-    var no_reward = "<span style='font-size:30px;'>+0</span>";
+    var reward = "<span style='font-size:45px;'>+10</span>";
+    var no_reward = "<span style='font-size:45px;'>+0</span>";
 
     var no_reward_timeout = "";
 
@@ -149,7 +150,7 @@
       type: 'call-function',
       func: function(){
         points = 0;
-        document.querySelector('#bandit-correct-count').innerHTML = points
+        // document.querySelector('#bandit-correct-count').innerHTML = points
         block_start_time = Date.now();
         timer_ticks = setInterval(function(){
           var proportion_time_elapsed = Math.floor((Date.now() - block_start_time) / expt_length * 100);
@@ -248,7 +249,7 @@
                 trial.stimulus = '../static/sound/correct_sound_3.wav'
                 jsPsych.data.getLastTrialData().values()[0].rewarded = true;
                 points += 10;
-                document.querySelector('#bandit-correct-count').innerHTML = points;
+                // document.querySelector('#bandit-correct-count').innerHTML = points;
             } else if (trial.prompt == no_reward) {
                 trial.stimulus = '../static/sound/incorrect_sound_2.mp3';
             }
@@ -308,20 +309,46 @@
         }
     }
 
-    /* define debrief trial */
-    var debrief = {
-        type: "survey-text",
+    var scale_1 = [
+        "1", 
+        "2", 
+        "3", 
+        "4", 
+        "5"
+    ];
+
+    /* define debrief trials */
+    var debrief_1 = {
+        type: "survey-likert",
         preamble: "Please answer a few final questions.",
         questions: [
-            {prompt: "What do you think we were studying in this experiment?",
-                rows: 3, columns: 100, required: true},
-            {prompt: "What do you think the rule was to determine if a response was rewarded?",
-                rows: 3, columns: 100, required: true}
-        ],
-        choices: [78]
+            {prompt: "How difficult was the task?", labels: scale_1, required: true},
+            {prompt: "How fun was the task?", labels: scale_1, required: true},
+            {prompt: "How clear were the instructions?", labels: scale_1, required: true},
+        ]
     }
 
-    /* define conclusion trial */
+    var debrief_2 = {
+        type: "survey-multi-choice",
+        questions: [
+            {prompt: "Did you complete the task on your own, without assistance from others?",
+                options: ["Yes", "No"], required: true},
+        ]
+    }
+
+    var debrief_3 = {
+        type: "survey-text",
+        questions: [
+            {prompt: "Did you use any strategies during the task (e.g. write things down)?",
+                rows: 3, columns: 100, required: true}
+        ],
+        button_label: "Submit",
+        on_finish: function(data) {
+            data.point_count = points;
+        }
+    }
+
+    /* define conclusion trial 
     var conclusion = {
         type: "html-keyboard-response",
         stimulus: "<p>Thank you for participating. The experiment has now concluded.</p>" +
@@ -331,8 +358,9 @@
         on_finish: function(data) {
             data.point_count = points;
         }
-    }
-    timeline.push(test_procedure, debrief, conclusion);
+    } */
+
+    timeline.push(test_procedure, debrief_1, debrief_2, debrief_3);
 
     /* start the experiment */
     jsPsych.init({
