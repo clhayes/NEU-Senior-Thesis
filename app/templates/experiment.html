@@ -85,9 +85,10 @@
 
     // Initialize other parameters
     var expt_length = 900000; // milliseconds
-    var points;
-    var block = 1;
-    var trial = 1;
+    var num_practice_trials = 4;
+    var points = 0;
+    var block = 0;    // starting block of practice trials
+    var trial = 1001; // starting trial of practice trials
     var random_jitter;
 
     // Initialize reward prompts (color-based)
@@ -127,38 +128,13 @@
             "<div style='float: right;'><img src='../static/img/neworange.png'></img>" +
             "<p class='small'><strong>Press 'L' to select</strong></p></div><p></p>",
 
-            "<p>The duration of this experiment is <strong>" +
-                expt_length/1000/60 + " minutes</strong>.</p><br><p>Click 'Next' to begin the experiment.</p>",
+            "<p>Now, you'll play through a few practice trials to familiarize yourself with the task.</p>" +
+            "<br><p>Click 'Next' to begin the practice trials.</p>",
             ],
         show_clickable_nav: true,
         post_trial_gap: 1000
     }
     timeline.push(instructions);
-
-    var show_timer = {
-        type: 'call-function',
-        func: function(){
-        document.querySelector('#bandit-score').style.display = 'block';
-        }
-    }
-    timeline.push(show_timer);
-
-    var block_start_time;
-    var timer_ticks;
-
-    var timer_start = {
-      type: 'call-function',
-      func: function(){
-        points = 0;
-        // document.querySelector('#bandit-correct-count').innerHTML = points
-        block_start_time = Date.now();
-        timer_ticks = setInterval(function(){
-          var proportion_time_elapsed = Math.floor((Date.now() - block_start_time) / expt_length * 100);
-          document.querySelector('#bandit-timer').value = proportion_time_elapsed;
-        }, 100)
-      }
-    }
-    timeline.push(timer_start);
 
     // Define initiation phase
     var initiation = {
@@ -297,6 +273,86 @@
         }
 
     }
+
+    var i = 1;
+
+    var practice_trials = {
+        timeline: [initiation, choice, outcome],
+        loop_function: function(){
+            if (i < num_practice_trials){
+                i++;
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+    timeline.push(practice_trials)
+
+    var instructions2 = {
+        type: "instructions",
+        pages: [
+            "<p>The duration of this experiment is <strong>" +
+                expt_length/1000/60 + " minutes</strong>.</p><br><p>Click 'Start' to begin the experiment.</p>",
+            ],
+        show_clickable_nav: true,
+        allow_backward: false,
+        button_label_next: "Start",
+        post_trial_gap: 1000
+    }
+    timeline.push(instructions2);
+
+    var reset_vars = {
+        type: 'call-function',
+        func: function(){
+
+            // Initialize reward probabilities such that left option is correct
+            prob_L = 0.7;        // Reward probability (left)
+            prob_R = 0.1;        // Reward probability (right)
+
+            // Correct choice randomization
+            correct = jsPsych.randomization.sampleWithoutReplacement([key_left, key_right], 1)[0];
+
+            if (correct == key_right) { // If right option is first high-probabiility option
+
+                // Switch probabilities
+                var intermediate = prob_L;
+                prob_L = prob_R;
+                prob_R = intermediate;
+
+            }
+
+            block = 1;
+            trial = 1;
+            counter = 0;
+        }
+    }
+    timeline.push(reset_vars);
+
+    var show_timer = {
+        type: 'call-function',
+        func: function(){
+        document.querySelector('#bandit-score').style.display = 'block';
+        }
+    }
+    timeline.push(show_timer);
+
+    var block_start_time;
+    var timer_ticks;
+
+    var timer_start = {
+      type: 'call-function',
+      func: function(){
+        points = 0;
+        // document.querySelector('#bandit-correct-count').innerHTML = points
+        block_start_time = Date.now();
+        timer_ticks = setInterval(function(){
+          var proportion_time_elapsed = Math.floor((Date.now() - block_start_time) / expt_length * 100);
+          document.querySelector('#bandit-timer').value = proportion_time_elapsed;
+        }, 100)
+      }
+    }
+    timeline.push(timer_start);
 
     var test_procedure = {
         timeline: [initiation, choice, outcome],
