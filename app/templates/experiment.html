@@ -84,7 +84,7 @@
     var timeline = [];
 
     // Initialize other parameters
-    var expt_length = 900000; // milliseconds
+    var expt_length = 1200000; // milliseconds
     var num_practice_trials = 4;
     var points = 0;
     var block = 0;    // starting block of practice trials
@@ -376,12 +376,16 @@
     /* define debrief trials */
     var debrief_1 = {
         type: "survey-likert",
-        preamble: "Please answer a few final questions.",
+        preamble: "placeholder",
         questions: [
             {prompt: "How difficult was the task?", labels: scale_1, required: true},
             {prompt: "How fun was the task?", labels: scale_1, required: true},
             {prompt: "How clear were the instructions?", labels: scale_1, required: true},
-        ]
+        ],
+        on_start: function(trial) {
+            trial.preamble = "<p>Great job! You earned <strong>" + points + 
+                " points</strong> during the experiment.</p>" + "<p>Please answer a few final questions.</p>"
+        }
     }
 
     var debrief_2 = {
