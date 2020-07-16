@@ -2063,6 +2063,8 @@ jsPsych.pluginAPI = (function() {
 
         parameters.callback_function({
           key: e.keyCode,
+          key_time: key_time,
+          start_time: start_time,
           rt: key_time - start_time
         });
 
