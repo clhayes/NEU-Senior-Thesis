@@ -111,11 +111,7 @@
             "This experiment uses audio cues, so please take a moment to adjust your volume if needed.",
 
             "<p>In this experiment, you will earn points by " +
-            "repeatedly choosing between two options.</p>" +
-            "<p>A cross (+) in the center of the screen will signal " +
-            "you to begin the trial.</p>" +
-            "<p>After the cross appears, press the <strong>space bar</strong> " +
-            "to start the trial.</p>",
+            "repeatedly choosing between two options.</p>",
 
             "<p>After beginning the trial, two circles will appear on the screen." +
             "<p>Use the 'A' or 'L' key to select a circle.</p>" +
@@ -277,7 +273,7 @@
     var i = 1;
 
     var practice_trials = {
-        timeline: [initiation, choice, outcome],
+        timeline: [choice, outcome],
         loop_function: function(){
             if (i < num_practice_trials){
                 i++;
@@ -355,7 +351,7 @@
     timeline.push(timer_start);
 
     var test_procedure = {
-        timeline: [initiation, choice, outcome],
+        timeline: [choice, outcome],
         loop_function: function(){
             if(Date.now() - block_start_time < expt_length){
                 return true;
@@ -426,7 +422,7 @@
     jsPsych.init({
         display_element: 'jspsych-target',
         timeline: timeline,
-        use_webaudio: true,
+        use_webaudio: false,
         preload_audio: audio,
         show_preload_progress_bar: false,
         on_finish: function() {
