@@ -8,9 +8,7 @@
     <script src="../static/lib/jquery-3.3.1/jquery.min.js"></script>
 
     <!-- Load NivTurk plug-ins -->
-    <script src="../static/js/jspsych-pass-data.js" type="text/javascript"></script>
-    <script src="../static/js/jspsych-pass-message.js" type="text/javascript"></script>
-    <script src="../static/js/jspsych-reject-data.js" type="text/javascript"></script>
+    <script src="../static/js/nivturk-plugins.js" type="text/javascript"></script>
 
     <!-- Load jsPsych plug-ins -->
     <script src="../static/lib/jspsych-6.1.0/plugins/jspsych-instructions.js"></script>
@@ -366,10 +364,10 @@
     }
 
     var scale_1 = [
-        "1", 
-        "2", 
-        "3", 
-        "4", 
+        "1",
+        "2",
+        "3",
+        "4",
         "5"
     ];
 
@@ -383,7 +381,7 @@
             {prompt: "How clear were the instructions?", labels: scale_1, required: true},
         ],
         on_start: function(trial) {
-            trial.preamble = "<p>Great job! You earned <strong>" + points + 
+            trial.preamble = "<p>Great job! You earned <strong>" + points +
                 " points</strong> during the experiment.</p>" + "<p>Please answer a few final questions.</p>"
         }
     }
@@ -408,7 +406,7 @@
         }
     }
 
-    /* define conclusion trial 
+    /* define conclusion trial
     var conclusion = {
         type: "html-keyboard-response",
         stimulus: "<p>Thank you for participating. The experiment has now concluded.</p>" +
@@ -438,7 +436,7 @@
           // jsPsych.data.displayData();
 
           // Save complete dataset to disk.
-          pass_data("{{workerId}}", "{{assignmentId}}", "{{hitId}}",  "{{a}}", "{{tp_a}}", "{{b}}", "{{tp_b}}", "{{c}}", "{{tp_c}}");
+          redirect_success("{{workerId}}", "{{assignmentId}}", "{{hitId}}",  "{{a}}", "{{tp_a}}", "{{b}}", "{{tp_b}}", "{{c}}", "{{tp_c}}");
 
           // Save rejected dataset to disk.
           // reject_data('1011')
