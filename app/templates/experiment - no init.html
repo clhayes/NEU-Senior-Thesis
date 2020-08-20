@@ -21,6 +21,7 @@
     <script src="../static/lib/jspsych-6.1.0/plugins/jspsych-survey-multi-choice.js"></script>
     <script src="../static/lib/jspsych-6.1.0/plugins/jspsych-survey-text.js"></script>
     <script src="../static/lib/jspsych-6.1.0/plugins/jspsych-call-function.js"></script>
+    <script src="../static/js/jspsych-survey-demo.js"></script>
 
     <!-- Load CSS styles -->
     <link href="../static/lib/jspsych-6.1.0/css/jspsych.css" rel="stylesheet" type="text/css"></link>
@@ -417,6 +418,13 @@
     } */
 
     timeline.push(test_procedure, debrief_1, debrief_2, debrief_3);
+    
+    // Add demographics form
+    var demo = {
+      type: 'survey-demo',
+      data: {survey: 'demographics'},
+    }
+    timeline.push(demo);
 
     /* start the experiment */
     jsPsych.init({
