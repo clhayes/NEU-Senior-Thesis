@@ -83,7 +83,10 @@
     var timeline = [];
 
     // Initialize other parameters
-    var expt_length = 1200000; // milliseconds
+    var session_length = 5; // minutes
+    var session_length_ms = session_length*1000*60;
+    var num_sessions = 4;
+    var session_counter = 0;
     var num_practice_trials = 4;
     var iti = 500; // milliseconds
     var init_alloted_time = 10000 // milliseconds
@@ -196,6 +199,7 @@
         choices: [32],        // allow space bar
 
         on_finish: function(data) {
+            data.session_num = session_counter;
             data.block_num = block;
             data.trial_num = trial;
             data.post_jitter = random_jitter;
@@ -228,6 +232,7 @@
 
         on_finish: function(data) {
 
+            data.session_num = session_counter;
             data.block_num = block;
             data.trial_num = trial;
             data.post_jitter = random_jitter;
@@ -297,6 +302,7 @@
         // On-finish function to update reward probabilities
         on_finish: function(data) {
 
+            data.session_num = session_counter;
             data.block_num = block;
             data.trial_num = trial;
 
@@ -337,13 +343,13 @@
 
     }
 
-    var i = 1;
+    var j = 1;
 
     var practice_trials = {
         timeline: [initiation, choice, outcome],
         loop_function: function(){
-            if (i < num_practice_trials){
-                i++;
+            if (j < num_practice_trials){
+                j++;
                 return true;
             } else {
                 return false;
@@ -351,19 +357,6 @@
         }
     }
     timeline.push(practice_trials)
-
-    var instructions2 = {
-        type: "instructions",
-        pages: [
-            "<p>The duration of this experiment is <strong>" +
-                expt_length/1000/60 + " minutes</strong>.</p><br><p>Click 'Start' to begin the experiment.</p>",
-            ],
-        show_clickable_nav: true,
-        allow_backward: false,
-        button_label_next: "Start",
-        post_trial_gap: 1000
-    }
-    timeline.push(instructions2);
 
     var reset_vars = {
         type: 'call-function',
@@ -385,12 +378,57 @@
 
             }
 
+            session_counter = session_counter + 1;
+            points = 0;
             block = 1;
             trial = 1;
             counter = 0;
         }
     }
     timeline.push(reset_vars);
+
+    var instructions2 = {
+        on_start: function(trial) {
+            trial.pages = [
+            "<p>Get ready to begin <strong>Session " + session_counter + " of " + num_sessions + "</strong>. " +
+            "<p>The duration of this session is <strong>" +
+                session_length + " minutes</strong>.</p><br><p>Click 'Start' to begin the experiment.</p>",
+            ]
+        }, 
+        type: "instructions",
+        pages: [],
+        show_clickable_nav: true,
+        allow_backward: false,
+        button_label_next: "Start",
+        post_trial_gap: 1000
+    }
+    timeline.push(instructions2);
+
+    var soft_reset_vars = {
+        type: 'call-function',
+        func: function(){
+
+            // Initialize reward probabilities such that left option is correct
+            prob_L = 0.6;        // Reward probability (left)
+            prob_R = 0.1;        // Reward probability (right)
+
+            // Correct choice randomization
+            correct = jsPsych.randomization.sampleWithoutReplacement([key_left, key_right], 1)[0];
+
+            if (correct == key_right) { // If right option is first high-probabiility option
+
+                // Switch probabilities
+                var intermediate = prob_L;
+                prob_L = prob_R;
+                prob_R = intermediate;
+
+            }
+
+            session_counter = session_counter + 1;
+            block = block + 1;
+            counter = 0;
+        }
+    }
 
     var show_timer = {
         type: 'call-function',
@@ -406,11 +444,10 @@
     var timer_start = {
       type: 'call-function',
       func: function(){
-        points = 0;
         // document.querySelector('#bandit-correct-count').innerHTML = points
         block_start_time = Date.now();
         timer_ticks = setInterval(function(){
-          var proportion_time_elapsed = Math.floor((Date.now() - block_start_time) / expt_length * 100);
+          var proportion_time_elapsed = Math.floor((Date.now() - block_start_time) / session_length_ms * 100);
           document.querySelector('#bandit-timer').value = proportion_time_elapsed;
         }, 100)
       }
@@ -420,12 +457,29 @@
     var test_procedure = {
         timeline: [initiation, choice, outcome],
         loop_function: function(){
-            if(Date.now() - block_start_time < expt_length){
+            if(Date.now() - block_start_time < session_length_ms){
                 return true;
             } else {
                 return false;
             }
         }
+    }
+
+    var pause_screen = {
+        on_start: function(trial) {
+            trial.pages = [
+            "Take a break for a few moments, and click 'Next' when you are ready to continue.",
+
+            "<p>Get ready to begin <strong>Session " + session_counter + " of " + num_sessions + "</strong>. " +
+                "The duration of this session is <strong>" +
+                session_length + " minutes</strong>.</p><br><p>Click 'Next' to begin the session.</p>",
+            ]
+        }, 
+        type: "instructions",
+        pages: [],
+        show_clickable_nav: true,
+        allow_backward: true,
+        post_trial_gap: 1000
     }
 
     var scale_1 = [
@@ -483,6 +537,10 @@
         }
     } */
 
+    for (var i = 1; i < num_sessions; i++) {
+        timeline.push(test_procedure, soft_reset_vars, pause_screen, timer_start);
+    }
+
     timeline.push(test_procedure, debrief_1, debrief_2, debrief_3);
 
     // Add demographics form
@@ -496,7 +554,7 @@
     jsPsych.init({
         display_element: 'jspsych-target',
         timeline: timeline,
-        use_webaudio: false,
+        use_webaudio: true,
         preload_audio: audio,
         show_preload_progress_bar: false,
         on_finish: function() {
