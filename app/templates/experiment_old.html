@@ -83,15 +83,8 @@
     var timeline = [];
 
     // Initialize other parameters
-    var session_length = 5; // minutes
-    var session_length_ms = session_length*1000*60;
-    var num_sessions = 4;
-    var session_counter = 0;
+    var expt_length = 1200000; // milliseconds
     var num_practice_trials = 4;
-    var iti = 500; // milliseconds
-    var init_alloted_time = 10000 // milliseconds
-    var choice_alloted_time = 15000 // milliseconds
-    var skipped = 0;
     var points = 0;
     var block = 0;    // starting block of practice trials
     var trial = 1001; // starting trial of practice trials
@@ -142,52 +135,8 @@
     }
     timeline.push(instructions);
 
-    // function to end trial when it is time
-    var end_trial = function(trial) {
-
-      // Kill all setTimeout handlers.
-      jsPsych.pluginAPI.clearAllTimeouts();
-      jsPsych.pluginAPI.cancelAllKeyboardResponses();
-
-      // clear the display
-      jsPsych.getDisplayElement().innerHTML = '';
-
-      trial.data.skipped_trial = true;
-
-      // move on to the next trial
-      jsPsych.finishTrial();
-    };
-
-    // function to handle missed responses
-    var missed_response = function(trial) {
-
-      // Kill all setTimeout handlers.
-      jsPsych.pluginAPI.clearAllTimeouts();
-      jsPsych.pluginAPI.cancelAllKeyboardResponses();
-
-      // Display warning message.
-      const msg = '<p style="font-size: 20px; line-height: 1.5em">You did not respond within the allotted time. Please pay more attention on the next trial.<br><br><b>Warning:</b> If you miss too many trials, we may end the experiment early and reject your work.';
-
-      jsPsych.getDisplayElement().innerHTML = msg;
-      skipped = 1;
-
-      jsPsych.pluginAPI.setTimeout(function() {
-        end_trial(trial);
-      }, 5000);
-
-    }
-
     // Define initiation phase
     var initiation = {
-        on_start: function(trial) {
-            // End trial if no response.
-            if (init_alloted_time !== null) {
-                trial.data.skipped_trial = false;
-                jsPsych.pluginAPI.setTimeout(function() {
-                    missed_response(trial);
-                }, init_alloted_time);
-            }
-        },
         type: 'html-keyboard-response',
         stimulus: "<div style='font-size:60px;'>+</div>",
         data: {test_phase: 'initiation'},
@@ -199,7 +148,6 @@
         choices: [32],        // allow space bar
 
         on_finish: function(data) {
-            data.session_num = session_counter;
             data.block_num = block;
             data.trial_num = trial;
             data.post_jitter = random_jitter;
@@ -209,20 +157,12 @@
 
     // Define choice phase
     var choice = {
-        on_start: function(trial) {
-            if (skipped == 1) {
-                jsPsych.getDisplayElement().innerHTML = '';
-                end_trial(trial);
-            } else {
-                trial.data.skipped_trial = false;
-            }
-        },
         type: 'html-keyboard-response',
         stimulus: "<div style='width: 700px;'>" +
                 "<div style='float: left;'><img src='../static/img/newblue.png'></img></div>" +
                 "<div style='float: right;'><img src='../static/img/neworange.png'></img></div>",
         data: {test_phase: 'choice'},
-        trial_duration: choice_alloted_time,
+        trial_duration: 15000,
         post_trial_gap: function(data){
             random_jitter = jsPsych.randomization.sampleWithoutReplacement([50, 100, 150, 200, 250,
                 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], 1)[0];
@@ -232,7 +172,6 @@
 
         on_finish: function(data) {
 
-            data.session_num = session_counter;
             data.block_num = block;
             data.trial_num = trial;
             data.post_jitter = random_jitter;
@@ -264,18 +203,11 @@
         choices: jsPsych.NO_KEYS,       // no response allowed
         response_ends_trial: false,
         trial_duration: 500,            // 1-second feedback time
-        post_trial_gap: iti,
+        post_trial_gap: 2500,
 
         // On-start function to generate rewards
         on_start: function(trial) {
 
-            if (skipped == 1) {
-                trial.data.skipped_trial = true;
-                //end_trial(trial);
-            } else {
-                trial.data.skipped_trial = false;
-            }
-            
             // Get key press from last trial
             last_key_press = jsPsych.data.get().last().select('key_press').values[0];
 
@@ -302,7 +234,6 @@
         // On-finish function to update reward probabilities
         on_finish: function(data) {
 
-            data.session_num = session_counter;
             data.block_num = block;
             data.trial_num = trial;
 
@@ -336,20 +267,19 @@
 
             }
 
-            skipped = 0;
             trial++;
 
         }
 
     }
 
-    var j = 1;
+    var i = 1;
 
     var practice_trials = {
         timeline: [initiation, choice, outcome],
         loop_function: function(){
-            if (j < num_practice_trials){
-                j++;
+            if (i < num_practice_trials){
+                i++;
                 return true;
             } else {
                 return false;
@@ -357,6 +287,19 @@
         }
     }
     timeline.push(practice_trials)
+
+    var instructions2 = {
+        type: "instructions",
+        pages: [
+            "<p>The duration of this experiment is <strong>" +
+                expt_length/1000/60 + " minutes</strong>.</p><br><p>Click 'Start' to begin the experiment.</p>",
+            ],
+        show_clickable_nav: true,
+        allow_backward: false,
+        button_label_next: "Start",
+        post_trial_gap: 1000
+    }
+    timeline.push(instructions2);
 
     var reset_vars = {
         type: 'call-function',
@@ -378,57 +321,12 @@
 
             }
 
-            session_counter = session_counter + 1;
-            points = 0;
             block = 1;
             trial = 1;
             counter = 0;
         }
     }
     timeline.push(reset_vars);
-
-    var instructions2 = {
-        on_start: function(trial) {
-            trial.pages = [
-            "<p>Get ready to begin <strong>Session " + session_counter + " of " + num_sessions + "</strong>. " +
-            "<p>The duration of this session is <strong>" +
-                session_length + " minutes</strong>.</p><br><p>Click 'Start' to begin the experiment.</p>",
-            ]
-        }, 
-        type: "instructions",
-        pages: [],
-        show_clickable_nav: true,
-        allow_backward: false,
-        button_label_next: "Start",
-        post_trial_gap: 1000
-    }
-    timeline.push(instructions2);
-
-    var soft_reset_vars = {
-        type: 'call-function',
-        func: function(){
-
-            // Initialize reward probabilities such that left option is correct
-            prob_L = 0.6;        // Reward probability (left)
-            prob_R = 0.1;        // Reward probability (right)
-
-            // Correct choice randomization
-            correct = jsPsych.randomization.sampleWithoutReplacement([key_left, key_right], 1)[0];
-
-            if (correct == key_right) { // If right option is first high-probabiility option
-
-                // Switch probabilities
-                var intermediate = prob_L;
-                prob_L = prob_R;
-                prob_R = intermediate;
-
-            }
-
-            session_counter = session_counter + 1;
-            block = block + 1;
-            counter = 0;
-        }
-    }
 
     var show_timer = {
         type: 'call-function',
@@ -444,10 +342,11 @@
     var timer_start = {
       type: 'call-function',
       func: function(){
+        points = 0;
         // document.querySelector('#bandit-correct-count').innerHTML = points
         block_start_time = Date.now();
         timer_ticks = setInterval(function(){
-          var proportion_time_elapsed = Math.floor((Date.now() - block_start_time) / session_length_ms * 100);
+          var proportion_time_elapsed = Math.floor((Date.now() - block_start_time) / expt_length * 100);
           document.querySelector('#bandit-timer').value = proportion_time_elapsed;
         }, 100)
       }
@@ -457,29 +356,12 @@
     var test_procedure = {
         timeline: [initiation, choice, outcome],
         loop_function: function(){
-            if(Date.now() - block_start_time < session_length_ms){
+            if(Date.now() - block_start_time < expt_length){
                 return true;
             } else {
                 return false;
             }
         }
-    }
-
-    var pause_screen = {
-        on_start: function(trial) {
-            trial.pages = [
-            "Take a break for a few moments, and click 'Next' when you are ready to continue.",
-
-            "<p>Get ready to begin <strong>Session " + session_counter + " of " + num_sessions + "</strong>. " +
-                "The duration of this session is <strong>" +
-                session_length + " minutes</strong>.</p><br><p>Click 'Next' to begin the session.</p>",
-            ]
-        }, 
-        type: "instructions",
-        pages: [],
-        show_clickable_nav: true,
-        allow_backward: true,
-        post_trial_gap: 1000
     }
 
     var scale_1 = [
@@ -501,14 +383,14 @@
         ],
         on_start: function(trial) {
             trial.preamble = "<p>Great job! You earned <strong>" + points +
-                " points</strong> during the experiment.</p>" + "<p>Please answer a few final questions. <font color='#c87606'>Your answers will not affect your payment or bonus.</font></p>"
+                " points</strong> during the experiment.</p>" + "<p>Please answer a few final questions.</p>"
         }
     }
 
     var debrief_2 = {
         type: "survey-multi-choice",
         questions: [
-            {prompt: "Did you complete the task on your own, without assistance from others? <font color='#c87606'>Your answer will not affect your payment or bonus.</font>",
+            {prompt: "Did you complete the task on your own, without assistance from others?",
                 options: ["Yes", "No"], required: true},
         ]
     }
@@ -516,7 +398,7 @@
     var debrief_3 = {
         type: "survey-text",
         questions: [
-            {prompt: "Did you use any strategies during the task (e.g. write things down)? <font color='#c87606'>Your answer will not affect your payment or bonus.</font>",
+            {prompt: "Did you use any strategies during the task (e.g. write things down)?",
                 rows: 3, columns: 100, required: true}
         ],
         button_label: "Submit",
@@ -536,10 +418,6 @@
             data.point_count = points;
         }
     } */
-
-    for (var i = 1; i < num_sessions; i++) {
-        timeline.push(test_procedure, soft_reset_vars, pause_screen, timer_start);
-    }
 
     timeline.push(test_procedure, debrief_1, debrief_2, debrief_3);
 
