@@ -84,56 +84,36 @@ def index():
         ## Redirect participant to error (platform error).
         return redirect(url_for('error.error', errornum=1001))
 
-    ## Case 3: repeat visit, preexisting log but no session data.
-    elif not 'workerId' in session and info['workerId'] in os.listdir(meta_dir):
-
-        ## Consult log file.
-        with open(os.path.join(session['metadata'], info['workerId']),'r') as f:
-            logs = f.read()
-
-        ## Case 3a: previously started experiment.
-        if 'experiment' in logs:
-
-            ## Update metadata.
-            session['workerId'] = info['workerId']
-            session['ERROR'] = '1004: Suspected incognito user.'
-            session['complete'] = 'error'
-            write_metadata(session, ['ERROR','complete'], 'a')
-
-            ## Redirect participant to error (previous participation).
-            return redirect(url_for('error.error', errornum=1004))
-
-        ## Case 3b: no previous experiment starts.
-        else:
-
-            ## Update metadata.
-            for k, v in info.items(): session[k] = v
-            session['WARNING'] = "Assigned new subId."
-            write_metadata(session, ['subId','WARNING'], 'a')
-
-            ## Redirect participant to consent form.
-            return redirect(url_for('consent.consent'))
-
-    ## Case 4: repeat visit, manually changed workerId.
-    elif 'workerId' in session and session['workerId'] != info['workerId']:
+    ## Case 3: repeat visit, previous success.
+    elif f"{info['subId']}.json" in os.listdir(data_dir):
 
         ## Update metadata.
-        session['ERROR'] = '1005: workerId tampering detected.'
-        session['complete'] = 'error'
-        write_metadata(session, ['ERROR','complete'], 'a')
-
-        ## Redirect participant to error (unusual activity).
-        return redirect(url_for('error.error', errornum=1005))
-
-    ## Case 5: repeat visit, previously completed experiment.
-    elif 'complete' in session:
-
-        ## Update metadata.
-        session['WARNING'] = "Revisited home."
-        write_metadata(session, ['WARNING'], 'a')
+        session['workerId'] = info['workerId']
+        session['complete'] = 'success'
 
         ## Redirect participant to complete page.
         return redirect(url_for('complete.complete'))
+
+    ## Case 4: repeat visit, previous reject.
+    elif f"{info['subId']}.json" in os.listdir(reject_dir):
+
+        ## Update metadata.
+        session['workerId'] = info['workerId']
+        session['complete'] = 'reject'
+
+        ## Redirect participant to complete page.
+        return redirect(url_for('complete.complete'))
+
+    ## Case 5: repeat visit, preexisting log but no session data.
+    elif not 'workerId' in session and info['workerId'] in os.listdir(meta_dir):
+
+        ## Update metadata.
+        for k, v in info.items(): session[k] = v
+        session['WARNING'] = "Incognito user."
+        write_metadata(session, ['subId','WARNING'], 'a')
+
+        ## Redirect participant to consent form.
+        return redirect(url_for('consent.consent'))
 
     ## Case 6: repeat visit, preexisting activity.
     elif 'workerId' in session:

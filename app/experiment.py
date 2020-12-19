@@ -28,12 +28,11 @@ def experiment():
     elif 'experiment' in session:
 
         ## Update participant metadata.
-        session['ERROR'] = "1004: Revisited experiment."
-        session['complete'] = 'error'
-        write_metadata(session, ['ERROR','complete'], 'a')
+        session['WARNING'] = "Restarted experiment."
+        write_metadata(session, ['WARNING'], 'a')
 
-        ## Redirect participant to error (previous participation).
-        return redirect(url_for('error.error', errornum=1004))
+        ## Present experiment.
+        return render_template('experiment.html', workerId=session['workerId'], assignmentId=session['assignmentId'], hitId=session['hitId'], a=session['a'], tp_a=session['tp_a'], b=session['b'], tp_b=session['tp_b'], c=session['c'], tp_c=session['tp_c'])
 
     ## Case 3: first visit.
     else:
